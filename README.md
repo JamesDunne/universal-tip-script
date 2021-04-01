@@ -12,8 +12,8 @@ Swiss army knife script for [Universal Tip](https://github.com/tanin47/tip#readm
 ## Instructions
 
 ```
+mkdir -p "~/Library/Application Scripts/tanin.tip" ; cd "~/Library/Application Scripts/tanin.tip"
 mv provider.script default.script
-mkdir -p "~/Library/Application Scripts/tanin.tip" && cd "~/Library/Application Scripts/tanin.tip"
 git clone https://github.com/JamesDunne/universal-tip-script .
 go build
 ```
