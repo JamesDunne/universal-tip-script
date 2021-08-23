@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/karrick/tparse"
 )
 
 func tryParseTime(value string, layouts ...string) (t time.Time, err error) {
@@ -79,32 +80,43 @@ func main() {
 	if terr != nil {
 		var ts int64
 		ts, terr = strconv.ParseInt(arg, 10, 64)
-		if terr != nil {
-			t_utcstr = "failed parsing time"
-		} else {
+		if terr == nil {
 			if ts < 99_999_999_999 {
 				// seconds
 				t = time.Unix(ts, 0)
 			} else if ts < 99_999_999_999_999 {
 				// milliseconds
-				t = time.Unix(ts / 1_000, (ts % 1_000) * 1_000_000)
+				t = time.Unix(ts/1_000, (ts%1_000)*1_000_000)
 			} else if ts < 99_999_999_999_999_999 {
 				// microseconds
-				t = time.Unix(ts / 1_000_000, (ts % 1_000_000) * 1_000)
+				t = time.Unix(ts/1_000_000, (ts%1_000_000)*1_000)
 			} else {
 				// nanoseconds
-				t = time.Unix(ts / 1_000_000_000, (ts % 1_000_000_000))
+				t = time.Unix(ts/1_000_000_000, (ts % 1_000_000_000))
 			}
 		}
 	}
+	if terr != nil {
+		// parse as a relative timestamp:
+		// arg e.g. "now+1d-3w4mo+7y6h4m"
+		var tr time.Time
+		tr, terr = tparse.ParseNow(time.RFC3339, arg)
+		if terr == nil {
+			t = tr
+		}
+	}
+	if terr != nil {
+		t_utcstr = "failed parsing time"
+	}
+
 	if terr == nil {
 		t_utcstr = t.UTC().Format(time.RFC3339Nano)
 		t_eststr = t.In(est).Format(time.RFC3339Nano)
 		t_cststr = t.In(cst).Format(time.RFC3339Nano)
 		// format as unix epoch values in seconds, milliseconds, nanoseconds:
-		ts_str_nsec = strconv.FormatInt(t.UTC().UnixNano(), 10)
-		ts_str_msec = strconv.FormatInt(t.UTC().UnixNano() / 1_000_000, 10)
 		ts_str_sec = strconv.FormatInt(t.UTC().Unix(), 10)
+		ts_str_msec = strconv.FormatInt(t.UTC().UnixNano()/1_000_000, 10)
+		ts_str_nsec = strconv.FormatInt(t.UTC().UnixNano(), 10)
 		jsonItems = append(jsonItems,
 			JsonObject{"type": "text", "value": "--- time RFC3339 (UTC, EST, CST):"},
 			JsonObject{"type": "text", "value": t_utcstr},
